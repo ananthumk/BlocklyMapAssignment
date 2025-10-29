@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet'
-import 'leaflet-rotatedmarker'
+
 import car from '../assets/car.jpg'
 import Bottomcontainer from './Bar'
 
@@ -16,12 +16,12 @@ const getDirection = (start, end) => {
     const y = Math.sin(dLng) * Math.cos(lat2Rad)
     const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLng)
     let angle = Math.atan2(y, x) * (180 / Math.PI)
-    return (angle + 360) % 360      
+    return (angle + 90 + 360) % 360      
 }
 
-const carIcon =  L.divIcon({
+const carIcon = (angle) => L.divIcon({
     className: 'custom-emoji-icon',
-    html: `<div style="font-size: 30px;">🚗</div>`,
+    html: `<div style="font-size: 30px; transform: rotate(${angle}deg); transform-origin: center;">🚗</div>`,
     iconSize: [30, 30],
     iconAnchor: [15, 15]
 })
@@ -33,7 +33,7 @@ export default function MapComponent() {
     const [carSpeed, setCarSpeed] = useState(1)
     const [routeByDay, setRouteByDay] = useState('today')
     const [rotation, setRotation] = useState(0)
-    const markerRef = useRef(null)
+  
     
     const handleCarSpeed = (index) => {
         const speedMap = {
@@ -63,9 +63,7 @@ export default function MapComponent() {
 
             const next = i + 1
             const angle = getDirection(route[i], route[next])
-            if (markerRef.current){
-                markerRef.current.setRotation(angle)
-            }
+            setRotation(angle)
             return next 
            })
         }, handleCarSpeed(carSpeed))
@@ -80,6 +78,7 @@ export default function MapComponent() {
     const handleReset = () => {
         setCurrentIndex(0)
         setIsPlaying(false)
+        setRotation(0)
     }
 
     if (route.length === 0) return <p>Map Loading....</p>
@@ -94,7 +93,7 @@ export default function MapComponent() {
 
                 <Polyline positions={route.map(toLatLng)} color='green' />
                 <Polyline positions={polyLinePoints} color="blue" />
-                <Marker ref={markerRef} position={markerPosition} icon={carIcon} >
+                <Marker position={markerPosition} icon={carIcon(rotation)} >
                 <Popup>
                     <div className='text-center'>
                        <strong>Vechicle Location</strong><br />
